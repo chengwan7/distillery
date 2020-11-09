@@ -260,10 +260,12 @@ defmodule Distillery.Releases.Release do
           # Merge plugins
           rel_plugins = Map.get(acc, :plugins, [])
           Map.put(acc, :plugins, rel_plugins ++ ps)
+
         {k, v}, acc ->
           case v do
             ignore when ignore in [nil, []] ->
               acc
+
             _ ->
               Map.put(acc, k, v)
           end
@@ -392,6 +394,8 @@ defmodule Distillery.Releases.Release do
 
     upfrom_path = Path.join([release.profile.output_dir, "releases", v])
 
+    Shell.debug("upfrom_path: #{upfrom_path}")
+
     if File.exists?(upfrom_path) do
       {:ok, %{release | :is_upgrade => true, :upgrade_from => v}}
     else
@@ -511,14 +515,17 @@ defmodule Distillery.Releases.Release do
           :ok ->
             # Haven't seen this app yet, and it is not excluded
             do_add_app(dg, as, parent, App.new(name, start_type))
+
           error ->
             error
         end
+
       _ ->
         # Already visited
         :ok
     end
   end
+
   defp add_app(dg, as, parent, name) do
     add_app(dg, as, parent, {name, nil})
   end
@@ -528,9 +535,11 @@ defmodule Distillery.Releases.Release do
     :ets.insert(as, {app.name, app})
     do_add_children(dg, as, app.name, app.applications ++ app.included_applications)
   end
+
   defp do_add_app(dg, as, parent, app) do
     :digraph.add_vertex(dg, app.name)
     :ets.insert(as, {app.name, app})
+
     case :digraph.add_edge(dg, parent, app.name) do
       {:error, reason} ->
         raise "edge from #{parent} to #{app.name} would result in cycle: #{inspect(reason)}"
